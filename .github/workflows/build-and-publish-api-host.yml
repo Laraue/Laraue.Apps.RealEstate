@@ -8,10 +8,10 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,13 +20,13 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-    
+
     - name: Restore dependencies
       run: dotnet restore src/Laraue.Apps.RealEstate.ApiHost
-    
+
     - name: Build
       run: dotnet build src/Laraue.Apps.RealEstate.ApiHost --no-restore -c Release
-    
+
     - name: Test
       run: dotnet test --filter 'Category!=IntegrationTest' --no-build --verbosity normal
 
@@ -34,8 +34,32 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: tar -czf api-host.tar.gz -C src/Laraue.Apps.RealEstate.ApiHost/bin/Release/net10.0 .
 
-    - name: Upload
+    - name: Upload artifact
       if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-host
+        path: api-host.tar.gz
+        retention-days: 7
+
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: realestate-api-host-production
+    steps:
+    - name: Notify deploy started
+      run: |
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d text="🚀 Deploy started: RealEstate Api Host (${{ github.sha }})"
+
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: api-host
+
+    - name: Upload host
       uses: marcodallasanta/ssh-scp-deploy@v1.2.0
       with:
        host: ${{ secrets.SSH_HOST }} # "example.com"
@@ -44,6 +68,32 @@ jobs:
        password: ${{ secrets.SSH_PASSWORD }} # "password"
        local: api-host.tar.gz
        remote: "/home/laraue/real-estate-api-host"
-       post_upload:
+       post_upload: |-
         cd /home/laraue/real-estate-api-host && find . -mindepth 1 ! -name api-host.tar.gz -delete &&
         tar -xzf api-host.tar.gz && rm api-host.tar.gz
+
+    - name: Build container
+      uses: appleboy/ssh-action@v1
+      with:
+       host: ${{ secrets.SSH_HOST }}
+       port: ${{ secrets.SSH_PORT }}
+       username: ${{ secrets.SSH_USER }}
+       password: ${{ secrets.SSH_PASSWORD }}
+       script: |
+        set -e
+        cd /home/laraue && docker compose build realestateapihost
+        docker compose up -d --force-recreate realestateapihost
+
+    - name: Notify deploy finished
+      if: success()
+      run: |
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d text="✅ Deploy finished: RealEstate Api Host (${{ github.sha }})"
+
+    - name: Notify deploy failed
+      if: failure()
+      run: |
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d text="❌ Deploy failed: RealEstate Api Host (${{ github.sha }})"

@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders().AddJsonConsole();
 
 builder.Services.AddOptions<TelegramNetOptions>();
 builder.Services.Configure<TelegramNetOptions>(builder.Configuration.GetSection("Telegram"));

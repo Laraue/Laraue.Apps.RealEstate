@@ -67,9 +67,9 @@ jobs:
        user: ${{ secrets.SSH_USER }} # "user"
        password: ${{ secrets.SSH_PASSWORD }} # "password"
        local: api-host.tar.gz
-       remote: "/home/laraue/real-estate-api-host"
+       remote: "/home/laraue/real-estate-web-api-host"
        post_upload: |-
-        cd /home/laraue/real-estate-api-host && find . -mindepth 1 ! -name api-host.tar.gz -delete &&
+        cd /home/laraue/real-estate-web-api-host && find . -mindepth 1 ! -name api-host.tar.gz -delete &&
         tar -xzf api-host.tar.gz && rm api-host.tar.gz
 
     - name: Build container
@@ -81,8 +81,8 @@ jobs:
        password: ${{ secrets.SSH_PASSWORD }}
        script: |
         set -e
-        cd /home/laraue && docker compose build realestateapihost
-        docker compose up -d --force-recreate realestateapihost
+        cd /home/laraue && docker compose build real-estate-web-api-host
+        docker compose up -d --force-recreate real-estate-web-api-host
 
     - name: Notify deploy finished
       if: success()

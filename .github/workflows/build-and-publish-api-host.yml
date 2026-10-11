@@ -52,7 +52,7 @@ jobs:
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="🚀 Deploy started: RealEstate Api Host (${{ github.sha }})"
+          -d text="🚀 Deploy started: Real Estate Web API Host (${{ github.sha }})"
 
     - name: Download artifact
       uses: actions/download-artifact@v4
@@ -67,9 +67,9 @@ jobs:
        user: ${{ secrets.SSH_USER }} # "user"
        password: ${{ secrets.SSH_PASSWORD }} # "password"
        local: api-host.tar.gz
-       remote: "/home/laraue/real-estate-api-host"
+       remote: "/home/laraue/real-estate-web-api-host"
        post_upload: |-
-        cd /home/laraue/real-estate-api-host && find . -mindepth 1 ! -name api-host.tar.gz -delete &&
+        cd /home/laraue/real-estate-web-api-host && find . -mindepth 1 ! -name api-host.tar.gz -delete &&
         tar -xzf api-host.tar.gz && rm api-host.tar.gz
 
     - name: Build container
@@ -81,19 +81,19 @@ jobs:
        password: ${{ secrets.SSH_PASSWORD }}
        script: |
         set -e
-        cd /home/laraue && docker compose build realestateapihost
-        docker compose up -d --force-recreate realestateapihost
+        cd /home/laraue && docker compose build real-estate-web-api-host
+        docker compose up -d --force-recreate real-estate-web-api-host
 
     - name: Notify deploy finished
       if: success()
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="✅ Deploy finished: RealEstate Api Host (${{ github.sha }})"
+          -d text="✅ Deploy finished: Real Estate Web API Host (${{ github.sha }})"
 
     - name: Notify deploy failed
       if: failure()
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="❌ Deploy failed: RealEstate Api Host (${{ github.sha }})"
+          -d text="❌ Deploy failed: Real Estate Web API Host (${{ github.sha }})"

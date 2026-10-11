@@ -52,7 +52,7 @@ jobs:
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="🚀 Deploy started: RealEstate Api Host (${{ github.sha }})"
+          -d text="🚀 Deploy started: Real Estate Web API Host (${{ github.sha }})"
 
     - name: Download artifact
       uses: actions/download-artifact@v4
@@ -89,11 +89,11 @@ jobs:
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="✅ Deploy finished: RealEstate Api Host (${{ github.sha }})"
+          -d text="✅ Deploy finished: Real Estate Web API Host (${{ github.sha }})"
 
     - name: Notify deploy failed
       if: failure()
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="❌ Deploy failed: RealEstate Api Host (${{ github.sha }})"
+          -d text="❌ Deploy failed: Real Estate Web API Host (${{ github.sha }})"

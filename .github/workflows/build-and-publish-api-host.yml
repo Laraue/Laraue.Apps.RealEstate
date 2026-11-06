@@ -83,6 +83,8 @@ jobs:
         set -e
         cd /home/laraue && docker compose build real-estate-web-api-host
         docker compose up -d --force-recreate real-estate-web-api-host
+        docker image prune -f || true
+        docker builder prune -f --filter until=168h || true
 
     - name: Notify deploy finished
       if: success()
